@@ -16,12 +16,12 @@ import java.security.Principal;
 
 @Controller
 @CrossOrigin
-@RequestMapping("/test")
-@RolesAllowed("user")
-public class TestController {
+@RequestMapping("/admin")
+@RolesAllowed("admin")
+public class TestController2 {
     @GetMapping()
     ResponseEntity<String> getTestString(Principal principal){
         String name = principal.getName();
-        return ResponseEntity.ok(name);
+        return ResponseEntity.ok(name + "  admin");
     }
 }
