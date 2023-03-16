@@ -3,9 +3,11 @@ package com.example.examservice.controller;
 import com.example.examservice.dto.request.ExamRequestDTO;
 import com.example.examservice.dto.request.OptionRequestDTO;
 import com.example.examservice.dto.request.QuestionRequestDTO;
+import com.example.examservice.dto.request.SubmitRequestDTO;
 import com.example.examservice.dto.response.ExamResponseDTO;
 import com.example.examservice.dto.response.OptionResponseDTO;
 import com.example.examservice.dto.response.QuestionResponseDTO;
+import com.example.examservice.entity.Collection;
 import com.example.examservice.entity.Exam;
 import com.example.examservice.entity.Option;
 import com.example.examservice.entity.Question;
@@ -17,6 +19,11 @@ import com.example.examservice.utils.ResponseUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.data.web.SpringDataWebProperties;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -59,11 +66,17 @@ public class ExamController {
         return optionRepository.findAll();
     }
 
+    /**
+     * Create new examination
+     *
+     * @param body exam request
+     * @return JSON result
+     */
     @PostMapping("")
     public ResponseEntity<?> createExam(@RequestBody ExamRequestDTO body) {
         try{
-            //Check collection is exists
-            if(!collectionRepository.existsById(body.getCollectionId())){
+            Optional<Collection> collectionOptional = collectionRepository.findById(body.getCollectionId());
+            if(collectionOptional.isEmpty()){
                 return ResponseUtils.error(HttpStatus.NOT_FOUND, "Not found collection id :: " + body.getCollectionId());
             }
 
@@ -72,17 +85,27 @@ public class ExamController {
             exam.setNumComments(0L);
             exam.setNumTakers(0L);
             exam.setCreatedDate(new Date());
+            exam.setCollection(collectionOptional.get());
             exam = examRepository.save(exam);
 
+            List<Option> insertedOptionList = new ArrayList<>();
             for (QuestionRequestDTO questionIndex : body.getQuestionList()){
                 //Create new question
-                Question question = mapper.map(questionIndex, Question.class);
-                question.setCreatedDate(new Date());
-                question.setExam(exam);
-                questionRepository.save(question);
+                Question insertedQuestion = mapper.map(questionIndex, Question.class);
+                insertedQuestion.setCreatedDate(new Date());
+                insertedQuestion.setExam(exam);
+                insertedQuestion = questionRepository.save(insertedQuestion);
+
+                int optionNumber = Math.min(questionIndex.getOptionList().size(), 4);
+                for(int i = 0; i < optionNumber; i++){
+                    Option insertedOption = mapper.map(questionIndex.getOptionList().get(i), Option.class);
+                    insertedOption.setCreatedDate(new Date());
+                    insertedOption.setQuestion(insertedQuestion);
+
+                    insertedOptionList.add(insertedOption);
+                }
             }
-
-
+            optionRepository.saveAll(insertedOptionList);
             return ResponseUtils.success(exam);
         }catch (Exception e){
             e.printStackTrace();
@@ -91,17 +114,47 @@ public class ExamController {
         return ResponseUtils.error(HttpStatus.NO_CONTENT, "Created new exam fail");
     }
 
-//    @GetMapping("")
-//    public ResponseEntity<?> getAllExam() {
-//        try{
-//            return ResponseUtils.success(examRepository.findAll());
-//        }catch (Exception e){
-//            e.printStackTrace();
-//            log.error("Exception");
-//        }
-//        return ResponseUtils.error(HttpStatus.NO_CONTENT, "Created new exam fail");
-//    }
+    /**
+     * Submit examination to check correct point
+     *
+     * @param map map
+     * @return JSON result
+     */
+    @PostMapping("/submit")
+    public ResponseEntity<?> submitExam(@RequestBody SubmitRequestDTO map) {
+        try{
+            List<Long> idOptionList = map.getData();
 
+            Iterable<Option> optionList = optionRepository.findAllById(idOptionList);
+
+            int correctNumber = 0;
+            List<Option> optionListResult = new ArrayList<>();
+            for(Option option : optionList){
+                if(option.getIsCorrect()){
+                    optionListResult.add(option);
+                    correctNumber++;
+                }
+            }
+
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("correctNum", correctNumber);
+            result.put("point", correctNumber*5);
+            result.put("options", optionListResult);
+
+            return ResponseUtils.success(result);
+        }catch (Exception e){
+            e.printStackTrace();
+            log.error("Exception");
+        }
+        return ResponseUtils.error(HttpStatus.NO_CONTENT, "Created new exam fail");
+    }
+
+    /**
+     * Get detail examination
+     *
+     * @param id id exam
+     * @return JSON result
+     */
     @GetMapping("/detail/{id}")
     public ResponseEntity<?> getExamDetail(@PathVariable Long id) {
         try{
@@ -113,34 +166,53 @@ public class ExamController {
             }
             Exam exam = examOptional.get();
 
-//            //Get list option and question from list id exam
-//            List<Question> questionList = questionRepository.findByExamId(exam.getId());
-//            List<Option> optionList = optionRepository.findByExamId(exam.getId());
-//
-//            //Loop list exam to get data
-//            ExamResponseDTO examResponse = mapper.map(exam, ExamResponseDTO.class);
-//
-//            List<QuestionResponseDTO> questionResponseList = new ArrayList<>();
-//            for(Question question : questionList){
-//                QuestionResponseDTO questionResponse = new QuestionResponseDTO();
-//                if(question.getExamId() == exam.getId()){
-//                    questionResponse = mapper.map(question, QuestionResponseDTO.class);
-//                }
-//
-//                List<OptionResponseDTO> optionResponseList = new ArrayList<>();
-//                for(Option option : optionList){
-//                    OptionResponseDTO optionResponse;
-//                    if(option.getQuestionId() == question.getId()){
-//                        optionResponse = mapper.map(option, OptionResponseDTO.class);
-//                        optionResponseList.add(optionResponse);
-//                    }
-//                }
-//                questionResponse.setOptions(optionResponseList);
-//                questionResponseList.add(questionResponse);
-//            }
-//            examResponse.setQuestions(questionResponseList);
+            List<Question> questionList = questionRepository.findAllByExam(exam);
 
-            return ResponseUtils.success(exam);
+            return ResponseUtils.success(questionList);
+        }catch (Exception e){
+            e.printStackTrace();
+            log.error("Exception");
+        }
+        return ResponseUtils.error(HttpStatus.NO_CONTENT, "Created new exam fail");
+    }
+
+    /**
+     * Top examination
+     * @return JSON result
+     */
+    @GetMapping("/top")
+    public ResponseEntity<?> getExamDetail() {
+        try{
+            Pageable sortByDate = PageRequest.of(0, 4, Sort.by("createdDate").descending());
+            //Get exam
+            Page<Exam> examPage = examRepository.findAll(sortByDate);
+            List<ExamResponseDTO> examResponseList = new ArrayList<>();
+            examPage.getContent().forEach((e) -> examResponseList.add(mapper.map(e, ExamResponseDTO.class)));
+
+            return ResponseUtils.success(examResponseList);
+        }catch (Exception e){
+            e.printStackTrace();
+            log.error("Exception");
+        }
+        return ResponseUtils.error(HttpStatus.NO_CONTENT, "Created new exam fail");
+    }
+
+    @GetMapping("")
+    public ResponseEntity<?> getListExam(@RequestParam(value = "limit", defaultValue = "10") Integer limit,
+                                         @RequestParam(value = "page", defaultValue = "0") Integer page) {
+        try{
+            Pageable sortByDate = PageRequest.of(page, limit, Sort.by("createdDate").descending());
+            //Get exam
+            Page<Exam> examPage = examRepository.findAll(sortByDate);
+            List<ExamResponseDTO> examResponseList = new ArrayList<>();
+            examPage.getContent().forEach((e) -> examResponseList.add(mapper.map(e, ExamResponseDTO.class)));
+
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("data", examResponseList);
+            result.put("total", examPage.getTotalElements());
+            result.put("totalPage", examPage.getTotalPages());
+
+            return ResponseUtils.success(result);
         }catch (Exception e){
             e.printStackTrace();
             log.error("Exception");

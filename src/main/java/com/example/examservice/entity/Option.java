@@ -1,6 +1,7 @@
 package com.example.examservice.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -15,9 +16,10 @@ public class Option {
     private Long id;
 
     @Column(name = "option_text")
-    private String optionText;
+    private String option;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
     private Question question;
 
     @Column(name = "is_correct")

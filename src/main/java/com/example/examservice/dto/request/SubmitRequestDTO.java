@@ -4,10 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class MaterialRequestDTO {
-    String text;
-    Integer type;
+public class SubmitRequestDTO {
+    List<Long> data;
 }

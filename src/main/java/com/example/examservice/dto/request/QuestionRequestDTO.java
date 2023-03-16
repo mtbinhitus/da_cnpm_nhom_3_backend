@@ -12,6 +12,6 @@ import java.util.List;
 @NoArgsConstructor
 public class QuestionRequestDTO {
     private String question;
-    private List<OptionRequestDTO> options;
+    private List<OptionRequestDTO> optionList;
     private String explain;
 }

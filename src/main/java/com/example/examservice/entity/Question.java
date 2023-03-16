@@ -1,6 +1,7 @@
 package com.example.examservice.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -29,10 +30,11 @@ public class Question {
     private Long materialId;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
     private Exam exam;
 
-//    @OneToMany(mappedBy = "questions", cascade = CascadeType.ALL)
-//    private List<Option> options = new ArrayList<>();
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<Option> options = new ArrayList<>();
 
     @Column(name = "created_date")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss dd/MM/yyyy")

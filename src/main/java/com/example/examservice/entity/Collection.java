@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Table(name = "collections")
@@ -16,6 +18,9 @@ public class Collection {
 
     @Column(unique = true)
     private String name;
+
+    @OneToMany(mappedBy = "collection", cascade = CascadeType.ALL)
+    private List<Exam> exams = new ArrayList<>();
 
     @Column(name = "created_date")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss dd/MM/yyyy")

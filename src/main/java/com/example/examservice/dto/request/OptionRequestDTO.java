@@ -10,6 +10,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class OptionRequestDTO {
-    private String optionText;
+    private String option;
     private Boolean isCorrect;
 }

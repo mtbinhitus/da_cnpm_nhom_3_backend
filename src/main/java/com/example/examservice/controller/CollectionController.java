@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -40,10 +41,12 @@ public class CollectionController{
         return ResponseUtils.error(HttpStatus.NO_CONTENT, "Created new collection fail");
     }
 
-    @GetMapping("")
+    @GetMapping()
     public ResponseEntity<?> getAllCollection() {
 
-        return ResponseUtils.success(collectionRepository.findAll());
+        Iterable<Collection> collections = collectionRepository.findAll();
+        collections.forEach((e) -> e.setExams(null));
+        return ResponseUtils.success(collections);
     }
 
     @GetMapping("/{id}")
@@ -53,8 +56,9 @@ public class CollectionController{
         if(collection.isEmpty()){
             return ResponseUtils.error(HttpStatus.NOT_FOUND, "Not found collection with id :: " + id);
         }
-
-        return ResponseUtils.success(collection.get());
+        Collection rs = collection.get();
+        rs.setExams(null);
+        return ResponseUtils.success(rs);
     }
 
     @DeleteMapping("/{id}")
