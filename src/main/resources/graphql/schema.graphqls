@@ -1,0 +1,23 @@
+type Query {
+    exams: [Exam]
+    questions: [Question]
+    options: [Option]
+}
+
+type Exam {
+    id: ID!
+    name: String!
+    questions: [Question]
+}
+
+type Question {
+    id: ID!
+    question: String!
+    options: [Option]
+}
+
+type Option {
+    id: ID!
+    optionText: String!
+}
+
