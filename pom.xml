@@ -63,11 +63,11 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>com.yixan.java.core</groupId>
-			<artifactId>yixan-base-service</artifactId>
-			<version>3.7.1</version>
-		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>com.yixan.java.core</groupId>-->
+<!--			<artifactId>yixan-base-service</artifactId>-->
+<!--			<version>3.7.1</version>-->
+<!--		</dependency>-->
 		<dependency>
 			<groupId>org.modelmapper</groupId>
 			<artifactId>modelmapper</artifactId>
