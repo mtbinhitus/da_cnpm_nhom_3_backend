@@ -197,7 +197,7 @@ public class ExamController {
         return ResponseUtils.error(HttpStatus.NO_CONTENT, "Created new exam fail");
     }
 
-    @GetMapping("")
+    @GetMapping("/all")
     public ResponseEntity<?> getListExam(@RequestParam(value = "limit", defaultValue = "10") Integer limit,
                                          @RequestParam(value = "page", defaultValue = "0") Integer page) {
         try{
