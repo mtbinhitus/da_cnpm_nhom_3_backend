@@ -72,4 +72,9 @@ public class CollectionController{
         }
         return ResponseUtils.error(HttpStatus.NO_CONTENT, "Delete collection fail");
     }
+
+    @GetMapping("/health-check")
+    public ResponseEntity<?> getAPIHealthCheck(){
+        return ResponseUtils.success("version: 1.0.0");
+    }
 }
