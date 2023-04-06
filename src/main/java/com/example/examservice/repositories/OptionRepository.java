@@ -9,4 +9,5 @@ import java.util.List;
 
 @Repository
 public interface OptionRepository extends CrudRepository<Option, Long> {
+    List<Option> findByExamId(Long examId);
 }

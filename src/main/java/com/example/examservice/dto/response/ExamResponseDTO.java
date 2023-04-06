@@ -15,4 +15,5 @@ public class ExamResponseDTO {
     private Long id;
     private String name;
     private CollectionResponseDTO collection;
+    private List<QuestionResponseDTO> questions;
 }

@@ -31,6 +31,9 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.security.RolesAllowed;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Slf4j
 @RestController
@@ -87,26 +90,43 @@ public class ExamController {
             exam.setNumComments(0L);
             exam.setNumTakers(0L);
             exam.setCreatedDate(new Date());
-            exam.setCollection(collectionOptional.get());
+            exam.setCollectionId(body.getCollectionId());
             exam = examRepository.save(exam);
 
-            List<Option> insertedOptionList = new ArrayList<>();
+            List<Question> insertedQuestionList = new ArrayList<>();
             for (QuestionRequestDTO questionIndex : body.getQuestionList()){
                 //Create new question
                 Question insertedQuestion = mapper.map(questionIndex, Question.class);
                 insertedQuestion.setCreatedDate(new Date());
-                insertedQuestion.setExam(exam);
-                insertedQuestion = questionRepository.save(insertedQuestion);
+                insertedQuestion.setExamId(exam.getId());
 
+                //add question to array insert
+                insertedQuestionList.add(insertedQuestion);
+            }
+
+            Iterable<Question> iterQuestion = questionRepository.saveAll(insertedQuestionList);
+            // Convert the iterator to a list
+            List<Question> qts = new ArrayList<>();
+            for (Question element : iterQuestion) {
+                qts.add(element);
+            }
+
+
+            List<Option> insertedOptionList = new ArrayList<>();
+            List<QuestionRequestDTO> questionRequestDTOList = body.getQuestionList();
+            for(int i = 0; i < qts.size(); i++){
+                QuestionRequestDTO questionIndex = questionRequestDTOList.get(i);
                 int optionNumber = Math.min(questionIndex.getOptionList().size(), 4);
-                for(int i = 0; i < optionNumber; i++){
+                for(int j = 0; j < optionNumber; j++){
                     Option insertedOption = mapper.map(questionIndex.getOptionList().get(i), Option.class);
                     insertedOption.setCreatedDate(new Date());
-                    insertedOption.setQuestion(insertedQuestion);
+                    insertedOption.setExamId(exam.getId());
+                    insertedOption.setQuestionId(qts.get(i).getId());
 
                     insertedOptionList.add(insertedOption);
                 }
             }
+
             optionRepository.saveAll(insertedOptionList);
             return ResponseUtils.success(exam);
         }catch (Exception e){
@@ -161,16 +181,44 @@ public class ExamController {
     public ResponseEntity<?> getExamDetail(@PathVariable Long id) {
         try{
             //Get exam
-            Optional<Exam> examOptional = examRepository.findById(id);
+            ExecutorService executors = Executors.newFixedThreadPool(3);
+            CompletableFuture<Optional<Exam>> examFuture = CompletableFuture.supplyAsync(() ->
+                    examRepository.findById(id), executors);
+            CompletableFuture<List<Question>> questionFuture = CompletableFuture.supplyAsync(() ->
+                    questionRepository.findByExamId(id), executors);
+            CompletableFuture<List<Option>> optionFuture = CompletableFuture.supplyAsync(() ->
+                    optionRepository.findByExamId(id), executors);
+            executors.shutdown();
+
+            Optional<Exam> examOptional = examFuture.join();
+            List<Question> questions = questionFuture.join();
+            List<Option> options = optionFuture.join();
 
             if(examOptional.isEmpty()){
                 return ResponseUtils.error(HttpStatus.NOT_FOUND, "Not found exam with id :: " + id);
+            }else {
+                Exam exam = examOptional.get();
+                ExamResponseDTO result = new ExamResponseDTO();
+                result.setId(exam.getId());
+
+                List<QuestionResponseDTO> questionResponse = new ArrayList<>();
+
+                for(Question qs : questions){
+                    QuestionResponseDTO qsRsp = mapper.map(qs, QuestionResponseDTO.class);
+
+                    List<OptionResponseDTO> optionResponse = new ArrayList<>();
+                    for(Option opt : options){
+                        OptionResponseDTO optRsp = mapper.map(opt, OptionResponseDTO.class);
+                        optionResponse.add(optRsp);
+                    }
+                    qsRsp.setOptions(optionResponse);
+                    questionResponse.add(qsRsp);
+                }
+
+                result.setQuestions(questionResponse);
+                return ResponseUtils.success(result);
             }
-            Exam exam = examOptional.get();
 
-            List<Question> questionList = questionRepository.findAllByExam(exam);
-
-            return ResponseUtils.success(questionList);
         }catch (Exception e){
             e.printStackTrace();
             log.error("Exception");

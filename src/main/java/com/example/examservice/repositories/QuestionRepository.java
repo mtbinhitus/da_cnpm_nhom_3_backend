@@ -10,5 +10,7 @@ import java.util.List;
 
 @Repository
 public interface QuestionRepository extends CrudRepository<Question, Long> {
-    List<Question> findAllByExam(Exam exam);
+//    List<Question> saveAll(List<Question> questionList);
+
+    List<Question> findByExamId(Long examId);
 }
