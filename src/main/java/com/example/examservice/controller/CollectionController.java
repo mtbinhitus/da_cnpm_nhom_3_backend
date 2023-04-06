@@ -45,7 +45,6 @@ public class CollectionController{
     public ResponseEntity<?> getAllCollection() {
 
         Iterable<Collection> collections = collectionRepository.findAll();
-        collections.forEach((e) -> e.setExams(null));
         return ResponseUtils.success(collections);
     }
 
@@ -57,7 +56,6 @@ public class CollectionController{
             return ResponseUtils.error(HttpStatus.NOT_FOUND, "Not found collection with id :: " + id);
         }
         Collection rs = collection.get();
-        rs.setExams(null);
         return ResponseUtils.success(rs);
     }
 
