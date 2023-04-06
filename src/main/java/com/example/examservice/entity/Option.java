@@ -18,9 +18,11 @@ public class Option {
     @Column(name = "option_text")
     private String option;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnore
-    private Question question;
+    @Column(name = "question_id")
+    private Long questionId;
+
+    @Column(name = "exam_id")
+    private Long examId;
 
     @Column(name = "is_correct")
     private Boolean isCorrect;

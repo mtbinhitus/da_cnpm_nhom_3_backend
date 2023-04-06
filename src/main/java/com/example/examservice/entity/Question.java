@@ -29,12 +29,8 @@ public class Question {
     @Column(name = "material_id")
     private Long materialId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnore
-    private Exam exam;
-
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private List<Option> options = new ArrayList<>();
+    @Column(name = "exam_id")
+    private Long examId;
 
     @Column(name = "created_date")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss dd/MM/yyyy")

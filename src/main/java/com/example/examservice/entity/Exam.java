@@ -29,12 +29,8 @@ public class Exam {
     @Column(name = "number_of_comments")
     private Long numComments;
 
-    @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Question> questions = new ArrayList<>();
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnore
-    private Collection collection;
+    @Column(name = "collection_id")
+    private Long collectionId;
 
     @Column(name = "created_date")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss dd/MM/yyyy")
