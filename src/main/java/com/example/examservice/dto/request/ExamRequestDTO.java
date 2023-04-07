@@ -12,5 +12,4 @@ import java.util.List;
 public class ExamRequestDTO {
     private Long collectionId;
     private String name;
-    private List<QuestionRequestDTO> questionList;
 }
