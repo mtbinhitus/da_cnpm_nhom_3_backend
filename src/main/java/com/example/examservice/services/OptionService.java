@@ -39,6 +39,11 @@ public class OptionService {
                 return null;
             }
 
+            //Save url audio
+            Exam exam = examOptional.get();
+            exam.setMediaLink(map.get("audioUrl").toString());
+            examRepo.save(exam);
+
             List<Option> options = new ArrayList<>();
             List<Material> materials = new ArrayList<>();
             List<String> keyList = Arrays.asList("part1", "part2", "part3", "part4", "part5", "part6", "part7");
