@@ -101,15 +101,15 @@ public class ExamController {
     public ResponseEntity<?> createQuestionInExam(@RequestBody Map<String, Object> map) {
         try {
             //Create option list
-            map.put("examId",Long.parseLong( map.get("examId").toString()));
             long startTime = System.nanoTime(); // Lấy thời điểm bắt đầu thực thi hàm
-            optionService.createOptionList(map);
+            Object result = optionService.createOptionList(map);
             long endTime = System.nanoTime(); // Lấy thời điểm kết thúc thực thi hàm
-
             long duration = (endTime - startTime) / 1000000; // Tính toán thời gian thực thi hàm
-
             System.out.println("Thời gian thực thi của hàm là: " + duration + "ms");
-            return ResponseUtils.success("Create successfully");
+
+            if(result != null){
+                return ResponseUtils.success("Create successfully");
+            }
         } catch (Exception e) {
             e.printStackTrace();
             log.error("Exception");

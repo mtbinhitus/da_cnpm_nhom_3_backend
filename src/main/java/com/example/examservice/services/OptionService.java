@@ -1,13 +1,7 @@
 package com.example.examservice.services;
 
-import com.example.examservice.entity.Material;
-import com.example.examservice.entity.Option;
-import com.example.examservice.entity.Question;
-import com.example.examservice.entity.Cluster;
-import com.example.examservice.repositories.ClusterRepository;
-import com.example.examservice.repositories.MaterialRepository;
-import com.example.examservice.repositories.OptionRepository;
-import com.example.examservice.repositories.QuestionRepository;
+import com.example.examservice.entity.*;
+import com.example.examservice.repositories.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,66 +26,79 @@ public class OptionService {
     private ClusterRepository clusterRepo;
 
     @Autowired
+    private ExamRepository examRepo;
+
+    @Autowired
     private MaterialRepository materialRepo;
 
     public List<Option> createOptionList(Map<String, Object> map) {
-        List<Option> options = new ArrayList<>();
-        List<Material> materials = new ArrayList<>();
-
-        List<String> keyList = Arrays.asList("part1", "part2", "part3", "part4", "part5", "part6", "part7");
-
-        List<CompletableFuture<Void>> futures = new ArrayList<>();
-
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            if (keyList.contains(entry.getKey())) {
-                Map<String, Object> part = (Map<String, Object>) entry.getValue();
-                List<Map<String, Object>> questionClusters = (List<Map<String, Object>>) part.get("questionClusters");
-
-                questionClusters.parallelStream().forEach((e) -> {
-                    //Create new question cluster
-                    Cluster questionCluster = new Cluster();
-                    questionCluster.setPart(entry.getKey());
-                    questionCluster.setCreatedDate(new Date());
-                    questionCluster.setExamId((long) map.get("examId"));
-
-                    CompletableFuture<Cluster> clusterFuture = CompletableFuture.supplyAsync(() ->
-                            clusterRepo.save(questionCluster)
-                    );
-                    CompletableFuture<Void> optionsFuture = clusterFuture.thenAcceptAsync(insertedCluster -> {
-                        final long clusterId = insertedCluster.getId();
-
-                        List<Map<String, Object>> questions = (List<Map<String, Object>>) e.get("questions");
-                        List<String> materialsMap = (List<String>) e.get("material");
-
-                        this.createMaterialEntity((long) map.get("examId"), clusterId, materialsMap, materials);
-                        this.convertQuestionInput((long) map.get("examId"), clusterId, questions, options);
-                    });
-                    futures.add(optionsFuture);
-                });
-            }
-        }
-
-        CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
-
         try {
-            allFutures.join();
-            allFutures.get();
-        } catch (InterruptedException | ExecutionException e) {
+            long examId = Long.parseLong(map.get("examId").toString());
+            Optional<Exam> examOptional = examRepo.findById(examId);
+            if(examOptional.isEmpty()){
+                return null;
+            }
+
+            List<Option> options = new ArrayList<>();
+            List<Material> materials = new ArrayList<>();
+            List<String> keyList = Arrays.asList("part1", "part2", "part3", "part4", "part5", "part6", "part7");
+
+            List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                if (keyList.contains(entry.getKey())) {
+                    Map<String, Object> part = (Map<String, Object>) entry.getValue();
+                    List<Map<String, Object>> questionClusters = (List<Map<String, Object>>) part.get("questionClusters");
+
+                    questionClusters.parallelStream().forEach((e) -> {
+                        //Create new question cluster
+                        Cluster questionCluster = new Cluster();
+                        questionCluster.setPart(entry.getKey());
+                        questionCluster.setCreatedDate(new Date());
+                        questionCluster.setExamId((long) map.get("examId"));
+
+                        CompletableFuture<Cluster> clusterFuture = CompletableFuture.supplyAsync(() ->
+                                clusterRepo.save(questionCluster)
+                        );
+                        CompletableFuture<Void> optionsFuture = clusterFuture.thenAcceptAsync(insertedCluster -> {
+                            final long clusterId = insertedCluster.getId();
+
+                            List<Map<String, Object>> questions = (List<Map<String, Object>>) e.get("questions");
+                            List<String> materialsMap = (List<String>) e.get("material");
+
+                            this.createMaterialEntity((long) map.get("examId"), clusterId, materialsMap, materials);
+                            this.convertQuestionInput((long) map.get("examId"), clusterId, questions, options);
+                        });
+                        futures.add(optionsFuture);
+                    });
+                }
+            }
+
+            CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
+
+            try {
+                allFutures.join();
+                allFutures.get();
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
+
+            ExecutorService executors = Executors.newFixedThreadPool(3);
+            CompletableFuture<Iterable<Option>> optionsFuture = CompletableFuture.supplyAsync(() ->
+                            optionRepo.saveAll(options)
+                    , executors);
+            CompletableFuture<Void> materialsFuture = CompletableFuture.runAsync(() ->
+                            materialRepo.saveAll(materials)
+                    , executors);
+            executors.shutdown();
+            materialsFuture.join();
+            List<Option> ops = new ArrayList<>();
+            optionsFuture.join().forEach(ops::add);
+            return ops;
+        } catch (Exception e){
             e.printStackTrace();
         }
-
-        ExecutorService executors = Executors.newFixedThreadPool(3);
-        CompletableFuture<Iterable<Option>> optionsFuture = CompletableFuture.supplyAsync(() ->
-                        optionRepo.saveAll(options)
-                , executors);
-        CompletableFuture<Void> materialsFuture = CompletableFuture.runAsync(() ->
-                        materialRepo.saveAll(materials)
-                , executors);
-        executors.shutdown();
-        materialsFuture.join();
-        List<Option> ops = new ArrayList<>();
-        optionsFuture.join().forEach(ops::add);
-        return ops;
+        return null;
     }
 
     private void createMaterialEntity(long examId, Long clusterId, List<String> materialsMap, List<Material> materials) {
