@@ -17,7 +17,6 @@ import java.security.Principal;
 @Controller
 @CrossOrigin
 @RequestMapping("/admin")
-@RolesAllowed("admin")
 public class TestController2 {
     @GetMapping()
     ResponseEntity<String> getTestString(Principal principal){
