@@ -13,6 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class HealthCheckController {
     @GetMapping()
     public ResponseEntity<?> getAPIHealthCheck(){
-        return ResponseUtils.success("API Version: 1.0.2");
+        return ResponseUtils.success("API Version: 1.1.0");
     }
 }
