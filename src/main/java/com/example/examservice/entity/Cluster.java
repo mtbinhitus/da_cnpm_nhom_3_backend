@@ -1,5 +1,9 @@
 package com.example.examservice.entity;
 
+import lombok.Data;
+
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
@@ -10,27 +14,18 @@ import java.util.Date;
 import java.util.List;
 
 @Entity
-@Table(name = "questions")
+@Table(name = "question_cluster")
 @Data
-public class Question {
+public class Cluster {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * Name of exam
-     */
-    @Column(name = "question_text")
-    private String question;
-
-    @Column(name = "cluter_id")
-    private Long cluterId;
-
-    @Column(name = "explain_answer")
-    private String explain;
-
     @Column(name = "exam_id")
     private Long examId;
+
+    @Column(name = "part")
+    private String part;
 
     @Column(name = "created_date")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss dd/MM/yyyy")

@@ -1,10 +1,8 @@
 package com.example.examservice.entity;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import javax.persistence.*;
-import java.util.Date;
 
 @Entity
 @Table(name = "materials")
@@ -14,13 +12,12 @@ public class Material {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "material_text")
-    private String text;
+    @Column(name = "url")
+    private String url;
 
-    @Column(name = "type")
-    private Integer type;
+    @Column(name = "cluster_id")
+    private Long cluterId;
 
-    @Column(name = "created_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss dd/MM/yyyy")
-    private Date createdDate;
+    @Column(name = "exam_id")
+    private Long examId;
 }

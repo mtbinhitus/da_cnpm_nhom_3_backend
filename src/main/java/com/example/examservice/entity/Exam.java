@@ -32,6 +32,9 @@ public class Exam {
     @Column(name = "collection_id")
     private Long collectionId;
 
+    @Column(name = "media_link")
+    private String mediaLink;
+
     @Column(name = "created_date")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss dd/MM/yyyy")
     private Date createdDate;

@@ -3,12 +3,14 @@ package com.example.examservice.controller;
 import com.example.examservice.dto.request.CollectionRequestDTO;
 import com.example.examservice.entity.Collection;
 import com.example.examservice.repositories.CollectionRepository;
+import com.example.examservice.services.CollectionService;
 import com.example.examservice.utils.ResponseUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
@@ -21,7 +23,7 @@ import java.util.Optional;
 public class CollectionController{
 
     @Autowired
-    CollectionRepository collectionRepository;
+    CollectionService collService;
 
     @Autowired
     ModelMapper mapper;
@@ -29,9 +31,12 @@ public class CollectionController{
     @PostMapping("")
     public ResponseEntity<?> createdCollection(@RequestBody CollectionRequestDTO body) {
         try{
+            if (ObjectUtils.isEmpty(body.getName())){
+                return ResponseUtils.error(HttpStatus.NO_CONTENT, "No param");
+            }
             Collection collection = mapper.map(body, Collection.class);
             collection.setCreatedDate(new Date());
-            Collection result = collectionRepository.save(collection);
+            Collection result = collService.saveCollection(collection);
 
             return ResponseUtils.success(result);
         }catch (Exception e){
@@ -44,26 +49,27 @@ public class CollectionController{
     @GetMapping()
     public ResponseEntity<?> getAllCollection() {
 
-        Iterable<Collection> collections = collectionRepository.findAll();
+        Iterable<Collection> collections = collService.getCollectionList();
         return ResponseUtils.success(collections);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getCollectionById(@PathVariable Long id){
-        Optional<Collection> collection = collectionRepository.findById(id);
-
-        if(collection.isEmpty()){
-            return ResponseUtils.error(HttpStatus.NOT_FOUND, "Not found collection with id :: " + id);
-        }
-        Collection rs = collection.get();
-        return ResponseUtils.success(rs);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> removeCollectionById(@PathVariable Long id){
         try{
-            collectionRepository.deleteById(id);
+            collService.deleteCollection(id);
             return ResponseUtils.success("Delete successfully by id :: " + id);
+        }catch (Exception e){
+            e.printStackTrace();
+            log.error("Exception");
+        }
+        return ResponseUtils.error(HttpStatus.NO_CONTENT, "Delete collection fail");
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateCollection(@PathVariable Long id, @RequestBody Collection collection){
+        try{
+            Collection updatedColl = collService.updateCollection(collection, id);
+            return ResponseUtils.success(updatedColl);
         }catch (Exception e){
             e.printStackTrace();
             log.error("Exception");
