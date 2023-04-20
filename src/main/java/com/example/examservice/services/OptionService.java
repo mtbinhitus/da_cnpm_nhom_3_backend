@@ -60,7 +60,7 @@ public class OptionService {
                         Cluster questionCluster = new Cluster();
                         questionCluster.setPart(entry.getKey());
                         questionCluster.setCreatedDate(new Date());
-                        questionCluster.setExamId((long) map.get("examId"));
+                        questionCluster.setExamId(Long.parseLong(Integer.toString((Integer) map.get("examId"))));
 
                         CompletableFuture<Cluster> clusterFuture = CompletableFuture.supplyAsync(() ->
                                 clusterRepo.save(questionCluster)
@@ -71,8 +71,8 @@ public class OptionService {
                             List<Map<String, Object>> questions = (List<Map<String, Object>>) e.get("questions");
                             List<String> materialsMap = (List<String>) e.get("material");
 
-                            this.createMaterialEntity((long) map.get("examId"), clusterId, materialsMap, materials);
-                            this.convertQuestionInput((long) map.get("examId"), clusterId, questions, options);
+                            this.createMaterialEntity(Long.parseLong(Integer.toString((Integer) map.get("examId"))), clusterId, materialsMap, materials);
+                            this.convertQuestionInput(Long.parseLong(Integer.toString((Integer) map.get("examId"))), clusterId, questions, options);
                         });
                         futures.add(optionsFuture);
                     });
