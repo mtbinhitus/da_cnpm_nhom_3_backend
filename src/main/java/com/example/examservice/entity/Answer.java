@@ -14,13 +14,12 @@ public class Answer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id")
-    private Long userId;
+    @Column(name = "correct_num")
+    private Integer correctNum;
 
-    @Column(name = "option_id")
-    private Long optionId;
+    @Column(name = "listening_point")
+    private Integer listeningPoint;
 
-    @Column(name = "created_date")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss dd/MM/yyyy")
-    private Date createdDate;
+    @Column(name = "writing_point")
+    private Integer writingPoint;
 }

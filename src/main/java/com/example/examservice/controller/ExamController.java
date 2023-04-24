@@ -7,6 +7,8 @@ import com.example.examservice.entity.Exam;
 import com.example.examservice.entity.Option;
 import com.example.examservice.entity.Question;
 import com.example.examservice.repositories.ExamRepository;
+import com.example.examservice.repositories.OptionRepository;
+import com.example.examservice.repositories.QuestionRepository;
 import com.example.examservice.services.CollectionService;
 import com.example.examservice.services.ExamService;
 import com.example.examservice.services.OptionService;
@@ -15,19 +17,23 @@ import com.example.examservice.utils.ResponseUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
 @Slf4j
 @RestController
-@RequestMapping(value = "/exam")
+@RequestMapping(value = "/exam", produces = MediaType.APPLICATION_JSON_VALUE)
 public class ExamController {
 
     @Autowired
@@ -41,31 +47,33 @@ public class ExamController {
 
     @Autowired
     OptionService optionService;
-    //    @Autowired
-//    OptionRepository optionRepository;
-//
-//    @Autowired
-//    QuestionRepository questionRepository;
+
+    @Autowired
+    OptionRepository optionRepository;
+
+    @Autowired
+    QuestionRepository questionRepository;
+
     @Autowired
     ExamRepository examRepository;
 
     @Autowired
     ModelMapper mapper;
 
-//    @QueryMapping
-//    public Iterable<Exam> exams() {
-//
-//        return examRepository.findAll();
-//    }
-//
-//    @QueryMapping
-//    public Iterable<Question> questions(){
-//        return questionRepository.findAll();
-//    }
-//
-//    @QueryMapping Iterable<Option> options(){
-//        return optionRepository.findAll();
-//    }
+    @QueryMapping
+    public Iterable<Exam> exams() {
+
+        return examRepository.findAll();
+    }
+
+    @QueryMapping
+    public Iterable<Question> questions(){
+        return questionRepository.findAll();
+    }
+
+    @QueryMapping Iterable<Option> options(){
+        return optionRepository.findAll();
+    }
 
     /**
      * Create new examination
@@ -97,8 +105,8 @@ public class ExamController {
         return ResponseUtils.error(HttpStatus.NO_CONTENT, "Created new exam fail");
     }
 
-    @PostMapping("/questionCrt")
-    public ResponseEntity<?> createQuestionInExam(@RequestBody Map<String, Object> map) {
+    @PostMapping(value = "/questionCrt", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Object createQuestionInExam(@RequestBody Map<String, Object> map) {
         try {
             //Create option list
             long startTime = System.nanoTime(); // Lấy thời điểm bắt đầu thực thi hàm
@@ -108,13 +116,13 @@ public class ExamController {
             System.out.println("Thời gian thực thi của hàm là: " + duration + "ms");
 
             if(result != null){
-                return ResponseUtils.success("Create successfully");
+                return result;
             }
         } catch (Exception e) {
             e.printStackTrace();
             log.error("Exception");
         }
-        return ResponseUtils.error(HttpStatus.NO_CONTENT, "Created new exam fail");
+        return null;
     }
 
     /**
@@ -123,34 +131,20 @@ public class ExamController {
      * @param map map
      * @return JSON result
      */
-//    @PostMapping("/submit")
-//    public ResponseEntity<?> submitExam(@RequestBody SubmitRequestDTO map) {
-//        try{
-//            List<Long> idOptionList = map.getData();
-//
-//            Iterable<Option> optionList = optionRepository.findAllById(idOptionList);
-//
-//            int correctNumber = 0;
-//            List<Option> optionListResult = new ArrayList<>();
-//            for(Option option : optionList){
-//                if(option.getIsCorrect()){
-//                    optionListResult.add(option);
-//                    correctNumber++;
-//                }
-//            }
-//
-//            Map<String, Object> result = new LinkedHashMap<>();
-//            result.put("correctNum", correctNumber);
-//            result.put("point", correctNumber*5);
-//            result.put("options", optionListResult);
-//
-//            return ResponseUtils.success(result);
-//        }catch (Exception e){
-//            e.printStackTrace();
-//            log.error("Exception");
-//        }
-//        return ResponseUtils.error(HttpStatus.NO_CONTENT, "Created new exam fail");
-//    }
+    @PostMapping("/submit")
+    public Object submitExam(@RequestBody Map<String, Object> map) {
+        try{
+
+            Map<String, Object> point = examService.submitExam(map);
+            return point;
+
+
+        }catch (Exception e){
+            e.printStackTrace();
+            log.error("Exception");
+        }
+        return null;
+    }
 
     /**
      * Get detail examination
@@ -158,19 +152,19 @@ public class ExamController {
      * @param id id exam
      * @return JSON result
      */
-    @GetMapping("/detail/{id}")
-    public ResponseEntity<?> getExamDetail(@PathVariable Long id) {
+    @PostMapping("/detail")
+    public Map<String, Object> getExamDetail(@RequestBody String id) {
         try {
             Map<String, Object> result = examService.getById(id);
 
             if (result != null) {
-                return ResponseUtils.success(result);
+                return result;
             }
         } catch (Exception e) {
             e.printStackTrace();
             log.error("Exception");
         }
-        return ResponseUtils.error(HttpStatus.NO_CONTENT, "Created new exam fail");
+        return null;
     }
 
     /**

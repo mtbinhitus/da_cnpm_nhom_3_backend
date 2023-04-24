@@ -30,7 +30,7 @@ public class Question {
     private String explain;
 
     @Column(name = "exam_id")
-    private Long examId;
+    private String examId;
 
     @Column(name = "created_date")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss dd/MM/yyyy")

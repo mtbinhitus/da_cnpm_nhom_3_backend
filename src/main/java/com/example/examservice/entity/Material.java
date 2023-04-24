@@ -19,5 +19,5 @@ public class Material {
     private Long cluterId;
 
     @Column(name = "exam_id")
-    private Long examId;
+    private String examId;
 }

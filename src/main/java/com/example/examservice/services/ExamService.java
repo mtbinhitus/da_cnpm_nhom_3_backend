@@ -33,6 +33,9 @@ public class ExamService {
     @Autowired
     private QuestionRepository questionRepo;
 
+    @Autowired
+    private AnswerRepository answerRepo;
+
     public Exam saveExam(Exam exam){
         return examRepo.save(exam);
     }
@@ -43,12 +46,7 @@ public class ExamService {
         return examRepo.findAll(sortByDate);
     }
 
-    public Map<String, Object> getById(Long id){
-        Optional<Exam> examOptional = examRepo.findById(id);
-
-        if(examOptional.isEmpty()){
-            return null;
-        }
+    public Map<String, Object> getById(String id){
 
         ExecutorService executors = Executors.newFixedThreadPool(5);
         CompletableFuture<List<Option>> optionsFuture = CompletableFuture.supplyAsync(() ->
@@ -134,4 +132,44 @@ public class ExamService {
         partList.add(clusterPart);
     }
 
+    public Map<String, Object> submitExam(Map<String, Object> map) {
+        try{
+            // 1. Get list option with examId
+            // 2. Loop answer sheet to get correct question
+            // 3. Mapping with point table
+            // 4. Return listening and writing point
+            String examId = map.get("examId").toString();
+            List<Map<String, Object>> listening = (List<Map<String, Object>>) map.get("listening");
+            List<Map<String, Object>> reading = (List<Map<String, Object>>) map.get("reading");
+
+            List<Option> options = optionRepo.findByExamId(examId);
+            int listeningNumber = getCorrectAnswer(options, listening, examId);
+            int readingNumber = getCorrectAnswer(options, reading, examId);
+
+            Answer listeningAnswer = answerRepo.findByCorrectNum(listeningNumber);
+            Answer readingAnswer = answerRepo.findByCorrectNum(readingNumber);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("listening", listeningAnswer.getListeningPoint());
+            result.put("writing", readingAnswer.getWritingPoint());
+
+            return result;
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private int getCorrectAnswer(List<Option> options, List<Map<String, Object>> mapList, String id){
+        int count = 0;
+        for(Map<String, Object> answer : mapList){
+            for(Option option : options){
+                if(Long.parseLong(answer.get("id").toString()) == option.getQuestionId()
+                        && answer.get("answer").toString().equals(option.getOption())){
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
 }

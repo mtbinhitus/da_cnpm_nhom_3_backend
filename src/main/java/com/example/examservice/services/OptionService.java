@@ -26,24 +26,10 @@ public class OptionService {
     private ClusterRepository clusterRepo;
 
     @Autowired
-    private ExamRepository examRepo;
-
-    @Autowired
     private MaterialRepository materialRepo;
 
     public List<Option> createOptionList(Map<String, Object> map) {
         try {
-            long examId = Long.parseLong(map.get("examId").toString());
-            Optional<Exam> examOptional = examRepo.findById(examId);
-            if(examOptional.isEmpty()){
-                return null;
-            }
-
-            //Save url audio
-            Exam exam = examOptional.get();
-            exam.setMediaLink(map.get("audioUrl").toString());
-            examRepo.save(exam);
-
             List<Option> options = new ArrayList<>();
             List<Material> materials = new ArrayList<>();
             List<String> keyList = Arrays.asList("part1", "part2", "part3", "part4", "part5", "part6", "part7");
@@ -60,7 +46,7 @@ public class OptionService {
                         Cluster questionCluster = new Cluster();
                         questionCluster.setPart(entry.getKey());
                         questionCluster.setCreatedDate(new Date());
-                        questionCluster.setExamId((long) map.get("examId"));
+                        questionCluster.setExamId(map.get("examId").toString());
 
                         CompletableFuture<Cluster> clusterFuture = CompletableFuture.supplyAsync(() ->
                                 clusterRepo.save(questionCluster)
@@ -71,8 +57,8 @@ public class OptionService {
                             List<Map<String, Object>> questions = (List<Map<String, Object>>) e.get("questions");
                             List<String> materialsMap = (List<String>) e.get("material");
 
-                            this.createMaterialEntity((long) map.get("examId"), clusterId, materialsMap, materials);
-                            this.convertQuestionInput((long) map.get("examId"), clusterId, questions, options);
+                            this.createMaterialEntity(map.get("examId").toString(), clusterId, materialsMap, materials);
+                            this.convertQuestionInput(map.get("examId").toString(), clusterId, questions, options);
                         });
                         futures.add(optionsFuture);
                     });
@@ -106,7 +92,7 @@ public class OptionService {
         return null;
     }
 
-    private void createMaterialEntity(long examId, Long clusterId, List<String> materialsMap, List<Material> materials) {
+    private void createMaterialEntity(String examId, Long clusterId, List<String> materialsMap, List<Material> materials) {
         for(String url : materialsMap){
             Material material = new Material();
             material.setCluterId(clusterId);
@@ -117,41 +103,7 @@ public class OptionService {
         }
     }
 
-//    private void convertQuestionInput(Long examId, Long clusterId, List<Map<String, Object>> mapQuestions, List<Option> options){
-//        if(mapQuestions.size() > 0){
-//            for(Map<String, Object> questE : mapQuestions){
-//                //Create and save question
-//                Question question = new Question();
-//                question.setQuestion(questE.get("questionContent") != null ? questE.get("questionContent").toString() : null);
-//                question.setExamId(examId);
-//                question.setCluterId(clusterId);
-//                question.setCreatedDate(new Date());
-//                question.setExplain(questE.get("explain").toString());
-//                ExecutorService executors = Executors.newFixedThreadPool(3);
-//                CompletableFuture<Question> questionFuture = CompletableFuture.supplyAsync(() ->
-//                        questionRepo.save(question), executors);
-//                Question insertedQuestion = questionFuture.join();
-//
-//                //Create option
-//                String correctOption = questE.get("correctOption").toString();
-//                Map<String, String> mapOptions = (Map<String, String>) questE.get("options");
-//
-//                for (Map.Entry<String, String> entry : mapOptions.entrySet()) {
-//                    log.info("Key : " + entry.getKey() + " Value : " + entry.getValue());
-//                    Option option = new Option();
-//                    option.setOption(entry.getValue());
-//                    option.setQuestionId(insertedQuestion.getId());
-//                    option.setCreatedDate(new Date());
-//                    option.setIsCorrect(Objects.equals(entry.getKey(), correctOption));
-//                    option.setExamId(examId);
-//
-//                    //Put to list option to save after that
-//                    options.add(option);
-//                } // loop options
-//            } //loop map Questions
-//        }
-//    }
-private void convertQuestionInput(Long examId, Long clusterId, List<Map<String, Object>> mapQuestions, List<Option> options) {
+private void convertQuestionInput(String examId, Long clusterId, List<Map<String, Object>> mapQuestions, List<Option> options) {
     if (mapQuestions.size() > 0) {
         List<CompletableFuture<Question>> questionFutures = new ArrayList<>();
         List<CompletableFuture<Void>> optionFutures = new ArrayList<>();

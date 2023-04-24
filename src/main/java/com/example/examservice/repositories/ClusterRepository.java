@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface ClusterRepository extends JpaRepository<Cluster, Long> {
-    List<Cluster> findByExamId(Long id);
+    List<Cluster> findByExamId(String id);
 }

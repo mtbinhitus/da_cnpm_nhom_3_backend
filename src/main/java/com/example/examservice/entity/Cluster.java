@@ -22,7 +22,7 @@ public class Cluster {
     private Long id;
 
     @Column(name = "exam_id")
-    private Long examId;
+    private String examId;
 
     @Column(name = "part")
     private String part;

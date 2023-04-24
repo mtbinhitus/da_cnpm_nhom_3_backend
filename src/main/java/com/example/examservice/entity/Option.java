@@ -22,7 +22,7 @@ public class Option {
     private Long questionId;
 
     @Column(name = "exam_id")
-    private Long examId;
+    private String examId;
 
     @Column(name = "is_correct")
     private Boolean isCorrect;

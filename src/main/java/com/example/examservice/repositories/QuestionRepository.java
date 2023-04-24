@@ -13,5 +13,5 @@ import java.util.List;
 public interface QuestionRepository extends JpaRepository<Question, Long> {
 //    List<Question> saveAll(List<Question> questionList);
 
-    List<Question> findByExamId(Long examId);
+    List<Question> findByExamId(String examId);
 }
