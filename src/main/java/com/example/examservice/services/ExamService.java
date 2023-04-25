@@ -111,7 +111,7 @@ public class ExamService {
                 //Create list options
                 List<String> options = new ArrayList<>();
                 for(Option option : optionList){
-                    if(option.getQuestionId() == question.getId()){
+                    if(Objects.equals(option.getQuestionId(), question.getId())){
                         options.add(option.getOption());
                     }
                 }
@@ -122,7 +122,7 @@ public class ExamService {
             }
         }
         for(Material material : materialList){
-            if(material.getCluterId() == cluster.getId()){
+            if(Objects.equals(material.getCluterId(), cluster.getId())){
                 materials.add(material.getUrl());
             }
         }
